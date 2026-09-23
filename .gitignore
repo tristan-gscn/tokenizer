@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Hardhat build output
+cache/
+artifacts/
+typechain-types/
+
+# Environment / secrets
+.env
+.env.local
+
+# Subject (must never be committed)
+en.subject.pdf
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*

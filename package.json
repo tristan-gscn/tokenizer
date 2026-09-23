@@ -1,0 +1,39 @@
+{
+  "name": "tokenizer",
+  "version": "1.0.0",
+  "description": "Tokenizer - BEP-20 token (Tokenizer42 / TK42) on BNB Smart Chain Testnet",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "coverage": "hardhat coverage",
+    "node": "hardhat node",
+    "deploy:local": "hardhat run deployment/deploy.ts",
+    "deploy:testnet": "hardhat run deployment/deploy.ts --network bscTestnet",
+    "clean": "hardhat clean"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tristan-gscn/tokenizer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tristan-gscn/tokenizer/issues"
+  },
+  "homepage": "https://github.com/tristan-gscn/tokenizer#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.6.1",
+    "@types/node": "^22.20.4",
+    "dotenv": "^18.0.3",
+    "hardhat": "^2.29.1",
+    "typescript": "^5.9.3"
+  }
+}
