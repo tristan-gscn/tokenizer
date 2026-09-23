@@ -1,23 +1,20 @@
-# Dependencies
-node_modules/
-
-# Hardhat build output
-cache/
-artifacts/
-typechain-types/
-
-# Environment / secrets
+node_modules
 .env
-.env.local
 
-# Subject (must never be committed)
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# Hardhat Ignition default folder for deployments against a local node
+ignition/deployments/chain-31337
+
 en.subject.pdf
-
-# Editors / OS
-.idea/
-.vscode/
-.DS_Store
-
-# Logs
-*.log
-npm-debug.log*
+.idea
