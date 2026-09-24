@@ -28,10 +28,24 @@ contract Trgascoi42 {
      */
     uint8 public decimals = 18;
 
+    /**
+     * @notice Hard limit on the number of units that can ever exist.
+     * @dev Declared `constant`, so it is inlined into the bytecode and cannot
+     *      be changed after deployment by anyone, including the owner. This is
+     *      what bounds the owner's minting power. The `10 ** 18` factor mirrors
+     *      `decimals` and must be kept in sync with it.
+     */
+    uint256 public constant MAX_SUPPLY = 1_000_000 * 10 ** 18;
+
     /** @notice Total number of units currently in circulation. */
     uint256 public totalSupply;
 
-    /** @notice Account allowed to mint new tokens. Set once at deployment. */
+    /**
+     * @notice Account allowed to mint new tokens.
+     * @dev Set to the deployer at construction. Can be handed over with
+     *      `transferOwnership` or given up for good with `renounceOwnership`,
+     *      after which it is the zero address and minting becomes impossible.
+     */
     address public owner;
 
     /**
@@ -60,20 +74,44 @@ contract Trgascoi42 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
     /**
+     * @notice Emitted when ownership moves, including at deployment and on
+     *         renunciation.
+     * @dev At deployment `previousOwner` is the zero address; on renunciation
+     *      `newOwner` is. Indexing both lets anyone audit the full ownership
+     *      history of the contract from its logs.
+     */
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @notice Restricts a function to the current owner.
+     * @dev Once ownership is renounced, `owner` is the zero address and no
+     *      caller can ever satisfy this check again.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Caller is not the owner");
+        _;
+    }
+
+    /**
      * @notice Deploys the token and credits the whole initial supply to the
      *         deployer, who also becomes the owner.
      * @dev The initial supply is emitted as a `Transfer` from the zero address,
      *      the standard way of representing token creation, so that explorers
-     *      attribute the supply to the deployer.
+     *      attribute the supply to the deployer. The cap is enforced here too,
+     *      otherwise a deployment could start out already above `MAX_SUPPLY`
+     *      and break the invariant that `mint` relies on.
      * @param initialSupply Supply expressed in whole tokens; it is scaled by
      *        `10**decimals` to obtain the amount in the smallest unit.
      */
     constructor(uint256 initialSupply) {
-        owner = msg.sender;
         uint256 total = initialSupply * (10 ** uint256(decimals));
+        require(total <= MAX_SUPPLY, "Initial supply exceeds cap");
+
+        owner = msg.sender;
         totalSupply = total;
         balanceOf[msg.sender] = total;
 
+        emit OwnershipTransferred(address(0), msg.sender);
         emit Transfer(address(0), msg.sender, total);
     }
 
@@ -145,20 +183,58 @@ contract Trgascoi42 {
     /**
      * @notice Creates `amount` new units and credits them to `to`.
      * @dev Restricted to the owner, and emitted as a `Transfer` from the zero
-     *      address like the initial supply. See the README for the rationale
-     *      behind the supply policy and the powers this grants the owner.
+     *      address like the initial supply. The cap check is what bounds the
+     *      owner's power: dilution is possible up to `MAX_SUPPLY` and never
+     *      beyond, and anyone can verify the remaining headroom on-chain.
      * @param to Address credited with the newly created tokens.
      * @param amount Amount to create, in the smallest unit.
      * @return True on success.
      */
-    function mint(address to, uint256 amount) public returns (bool) {
-        require(msg.sender == owner, "Only owner can mint");
+    function mint(address to, uint256 amount) public onlyOwner returns (bool) {
         require(to != address(0), "Mint to zero address");
+        require(totalSupply + amount <= MAX_SUPPLY, "Cap exceeded");
 
         totalSupply += amount;
         balanceOf[to] += amount;
 
         emit Transfer(address(0), to, amount);
         return true;
+    }
+
+    /**
+     * @notice Hands ownership over to `newOwner`.
+     * @dev The zero address is rejected on purpose: giving up ownership is a
+     *      deliberate act that must go through `renounceOwnership`, so it
+     *      cannot happen by passing an empty address by mistake.
+     * @param newOwner Address receiving the minting privilege.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0), "New owner is zero address");
+
+        address previousOwner = owner;
+        owner = newOwner;
+
+        emit OwnershipTransferred(previousOwner, newOwner);
+    }
+
+    /**
+     * @notice Gives up ownership for good, permanently disabling `mint`.
+     * @dev One-way and irreversible: `owner` becomes the zero address, which no
+     *      caller can ever match, so the total supply is frozen forever. This
+     *      is the intended end state once distribution is complete.
+     */
+    function renounceOwnership() public onlyOwner {
+        address previousOwner = owner;
+        owner = address(0);
+
+        emit OwnershipTransferred(previousOwner, address(0));
+    }
+
+    /**
+     * @notice Number of units that can still be minted before hitting the cap.
+     * @return The remaining mintable amount, in the smallest unit.
+     */
+    function remainingSupply() public view returns (uint256) {
+        return MAX_SUPPLY - totalSupply;
     }
 }
