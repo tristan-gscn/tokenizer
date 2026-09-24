@@ -37,12 +37,12 @@ const config: HardhatUserConfig = {
     },
   },
 
-  // Source verification on BscScan. The bscTestnet chain is built into
-  // hardhat-verify, so no customChains entry is needed.
+  // Source verification. The key must be a plain string, not an object keyed by
+  // network: hardhat-verify treats a string as an etherscan.io key and calls the
+  // unified v2 API, while the object form selects the per-explorer v1 API that
+  // was shut down in 2025. bscTestnet is a built-in chain, so no customChains.
   etherscan: {
-    apiKey: {
-      bscTestnet: BSCSCAN_API_KEY,
-    },
+    apiKey: BSCSCAN_API_KEY,
   },
 };
 
